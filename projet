@@ -1,0 +1,38 @@
+pipeline {
+    agent none
+    stages {
+        stage('Deploy to web1') {
+            agent { label 'web1' }
+            steps {
+                // Checkout dans l'agent web1
+                git branch: 'main', url: 'git@github.com:e-jbr/PROJET.git', credentialsId: 'github'
+                script {
+                    deployToServer()
+                }
+            }
+        }
+        stage('Deploy to web2') {
+            agent { label 'web2' }
+            steps {
+                // Checkout dans l'agent web2
+                git branch: 'main', url: 'git@github.com:e-jbr/PROJET.git', credentialsId: 'github'
+                script {
+                    deployToServer()
+                }
+            }
+        }
+    }
+    triggers {
+        cron('0 12 * * 5') // Tous les vendredis à midi
+    }
+}
+
+def deployToServer() {
+    def containers = ['accueil', 'ansible', 'docker', 'jenkins', 'terraform', 'kubernetes']
+    for (c in containers) {
+        sh """
+           docker cp ./${c} ${c}:/var/www/html/index.html
+           docker exec ${c} service apache2 restart
+        """
+    }
+}
