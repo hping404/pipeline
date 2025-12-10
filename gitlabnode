@@ -1,0 +1,69 @@
+image: node:22-alpine
+
+variables:
+  VITE_COMMIT_SHA: $CI_COMMIT_SHORT_SHA
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+stages:
+  - prepare
+  - test
+  - build
+  - deploy
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+sast:
+  stage: test
+  needs:
+    - install_deps
+
+install_deps:
+  stage: prepare
+  script:
+    - npm ci
+  artifacts:
+    paths:
+      - node_modules/
+
+lint:
+  stage: test
+  needs: 
+    job: install_deps
+  script:
+    - echo "Linting code"
+    - npm run lint:gitlab
+  artifacts:
+    reports:
+      codequality: gl-codequality.json
+    paths:
+      - gl-codequality.json
+
+unit_tests:
+  stage: test
+  needs: 
+    job: install_deps
+  script:
+    - echo "Running unit tests"
+    - npm run test
+  artifacts:
+    reports:
+      junit: reports/junit.xml
+    paths:
+      - reports/junit.xml
+
+build_app:
+  stage: build
+  needs: 
+    job: install_deps
+  script:
+    - echo "Building the app"
+    - echo "$VITE_COMMIT_SHA"
+    - npm run build
+  artifacts:
+    paths:
+      - build/
