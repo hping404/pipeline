@@ -1,0 +1,83 @@
+image: node:alpine #?
+#image: php:alpine
+
+stages:
+- install
+- test
+- lint
+- scan
+- sonar
+- build #Si Abdoulie demande faire dind
+
+.variables: #variabiliser en cachant + masquant ?
+  SONAR_PROJECT_KEY: "clé projet Sonar"
+  SONAR_HOST_URL: "http://servsonar"
+  SONAR_TOKEN: "token" 
+
+cache:
+  key: dep_cache
+  paths:
+    - node_modules/
+    - vendor/ 
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+sast:
+  stage: scan
+  needs:
+    - install_deps_js
+    - install_deps_php
+
+install_deps_js:
+  stage: install
+  script:
+    - npm ci
+  cache:
+    key: dep_js
+
+install_deps_php:
+  stage: install
+  script:
+    - composer install
+  cache:
+    key: dep_php
+
+lint_js:
+  stage: lint
+  script:
+    - npm run lint
+  cache:
+    key: dep_js
+
+test_js:
+  stage: test
+  script:
+    - npm test
+  cache:
+    key: dep_js
+
+lint_php:
+  image: php:alpine
+  stage: lint
+  script:
+    - ./vendor/bin/phpcs /chemin/vers/php/abdoulie
+  cache:
+    key: dep_php
+
+test_php:
+  image: php:alpine
+  stage: test
+  script:
+    - ./vendor/bin/phpunit /chemin/vers/php/abdoulie
+  cache:
+    key: dep_php
+
+.analyze:
+  stage: sonar
+  script:
+    - sonar-scanner
+  cache:
+    key:
+      - dep_js
+      - dep_php
