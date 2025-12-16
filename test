@@ -8,6 +8,7 @@ stages:
 - scan
 - sonar
 - build #Si Abdoulie demande faire dind
+- deploy
 
 .variables: #variabiliser en cachant + masquant ?
   SONAR_PROJECT_KEY: "clé projet Sonar"
@@ -76,8 +77,26 @@ test_php:
 .analyze:
   stage: sonar
   script:
-    - sonar-scanner
+    - sonar-scanner \
+        -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+        -Dsonar.host.url=$SONAR_HOST_URL \
+        -Dsonar.login=$SONAR_TOKEN
   cache:
     key:
       - dep_js
       - dep_php
+
+.build:
+  stage: build
+  services: docker:dind
+  image: xxx:alpine
+  script:
+    - docker build -t . test:php
+    - docker push
+
+.deploy:
+  stage: deploy
+  image:
+  script:
+    - 
+    -
