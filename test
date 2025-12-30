@@ -10,7 +10,7 @@ stages:
 - build #Si Abdoulie demande faire dind
 - deploy
 
-.variables: #variabiliser en cachant + masquant ?
+.variables: #variabiliser en cachant + masquant
   SONAR_PROJECT_KEY: "clé projet Sonar"
   SONAR_HOST_URL: "http://servsonar"
   SONAR_TOKEN: "token" 
